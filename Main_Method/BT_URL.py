@@ -7,6 +7,7 @@ import socket
 import random
 import base64
 import requests
+import datetime
 from lxml import etree
 from urllib import parse
 from http import cookiejar
@@ -148,6 +149,7 @@ class SearchBT(ScanCookies):
         except Exception as error:
 
             print('--->',error)
+            local_redis.delete('Bt_Cookies')
             return
         else:
 
@@ -172,14 +174,14 @@ class SearchBT(ScanCookies):
 
                     # 截取种子的名称并进行转码
                     redis_key = parse.unquote(line[str(line).index('dn='):]).replace('dn=','')
-                    local_redis.set(redis_key, line)
+                    local_redis.set(redis_key, parse.unquote(line))
                 except Exception as error:
 
                     print(error)
                     continue
                 else:
 
-                    print('{}\t{}'.format(redis_key,line))
+                    print('{}\t{}'.format(redis_key,parse.unquote(line)))
                     # self.__wirte_user_words_bt('./User_Method/user_magnet_bt_url.txt',line)
 
     # 写入用户指定单词
