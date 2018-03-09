@@ -126,7 +126,7 @@ class SearchBT(ScanCookies):
                 headers = {'User-Agent': user_agent,
                            'Cookie': redis_cookies}
 
-                print(headers)
+                # print(headers)
                 # 响应请求
 
                 if url_type is 'search':
@@ -138,13 +138,12 @@ class SearchBT(ScanCookies):
                                         timeout=5)
                 else:
 
-                    print()
                     response = requests.get(
                         base64.b85decode(self.__hot_url.encode(self.__ie_type)).decode(self.__ie_type),
                         headers=headers,
                         timeout=5)
 
-                print(response.url)
+                # print(response.url)
                 content = response.content.decode('utf-8')
         except Exception as error:
 
@@ -180,15 +179,30 @@ class SearchBT(ScanCookies):
                     continue
                 else:
 
-                    print('-------------{}-{}\t{}'.format(page_num,redis_key,line))
-                    # print(line)
+                    print('{}\t{}'.format(redis_key,line))
+                    # self.__wirte_user_words_bt('./User_Method/user_magnet_bt_url.txt',line)
+
+    # 写入用户指定单词
+    def __wirte_user_words_bt(self, file_name, bt_url):
+
+        bt_url = parse.unquote(bt_url) + '\n'
+
+        try:
+
+            with open(file_name, 'a') as sf:
+
+                sf.write(bt_url)
+                sf.close()
+        except Exception as error:
+
+            print(error)
 
     # 使用xpath获取url
     def bt_search_run(self):
 
         thd_list = []
 
-        for p_num in range(1,3):
+        for p_num in range(1,2):
 
             thd_get_bt_url = Thread(target=self.__obtain_url_data, args=(p_num,))
             thd_get_bt_url.start()
@@ -198,7 +212,7 @@ class SearchBT(ScanCookies):
 
             thd_end.join()
 
-        print('获取完成')
+        # print('获取完成')
 
 
 # 热门搜索
@@ -227,11 +241,13 @@ class HotSearch(SearchBT):
             return today_hot_words
 
 
-hot_words = HotSearch('')
-hot_list = hot_words.hot_search_word()
+if __name__ == '__main__':
 
-for words in hot_list:
+    # 获取热门词汇
+    hot_words = HotSearch('')
+    hot_list = hot_words.hot_search_word()
 
-    SearchBT(words).bt_search_run()
+    for words in hot_list:
 
+        SearchBT(words).bt_search_run()
 
