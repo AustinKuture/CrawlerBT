@@ -87,6 +87,7 @@ class SearchBT(ScanCookies):
     # 获取数据
     def _bt_obtain(self, url_type, page_num=0):
 
+        time.sleep(random.randint(1,10) * 0.01)
         content = ''
         try:
 
@@ -179,9 +180,9 @@ class SearchBT(ScanCookies):
 
                     print(error)
                     continue
-                else:
+                # else:
 
-                    print('{}\t{}'.format(redis_key,parse.unquote(line)))
+                    # print('{}\t{}'.format(redis_key,parse.unquote(line)))
                     # self.__wirte_user_words_bt('./User_Method/user_magnet_bt_url.txt',line)
 
     # 写入用户指定单词
@@ -204,7 +205,7 @@ class SearchBT(ScanCookies):
 
         thd_list = []
 
-        for p_num in range(1,2):
+        for p_num in range(1,3):
 
             thd_get_bt_url = Thread(target=self.__obtain_url_data, args=(p_num,))
             thd_get_bt_url.start()
@@ -213,8 +214,6 @@ class SearchBT(ScanCookies):
         for thd_end in thd_list:
 
             thd_end.join()
-
-        # print('获取完成')
 
 
 # 热门搜索
@@ -236,11 +235,37 @@ class HotSearch(SearchBT):
         except Exception as error:
 
             print('Hotsearch:{}'.format(error))
-            return
+            return today_hot_words
 
         else:
 
             return today_hot_words
+
+    # 开启相应进程
+    def hot_class_pro(self, word_pid, pro_hot_list):
+
+        print('-----------{}---------->进程-{}'.format(word_pid, pro_hot_list))
+        for words in pro_hot_list:
+
+            try:
+
+                if words:
+
+                    SearchBT(words).bt_search_run()
+                    print('-------进程：{}-----{}:{}:{}正在爬取热词---{}'.format(word_pid, current_time.hour,
+                                                                               current_time.minute,
+                                                                               current_time.second,
+                                                                               words))
+                else:
+
+                    continue
+            except Exception as error:
+
+                print(error)
+                continue
+        print('-------进程：{}-----{}:{}:{}-爬取完成'.format(word_pid,current_time.hour,
+                                                           current_time.minute,
+                                                           current_time.second,))
 
 
 if __name__ == '__main__':
@@ -248,8 +273,62 @@ if __name__ == '__main__':
     # 获取热门词汇
     hot_words = HotSearch('')
     hot_list = hot_words.hot_search_word()
+    
+    current_time = datetime.datetime.now()
+    print('{}:{}:{}-开始爬取......'.format(current_time.hour,
+                                       current_time.minute,
+                                       current_time.second))
 
-    for words in hot_list:
+    try:
 
-        SearchBT(words).bt_search_run()
+        total_num = int(len(hot_list)/10)
+        class_hot_list = [[hot_list[a_i * b_i] for b_i in range(1, total_num)] for a_i in range(1,10)]
+    except Exception as error:
+
+        print('进程分类错误：{}'.format(error))
+    else:
+
+        pro_list = []
+        pro_pid = 0
+        for lines in class_hot_list:
+
+            try:
+                pro = Process(target=hot_words.hot_class_pro, args=(pro_pid, lines))
+                pro.start()
+            except Exception as error:
+
+                print('进程开启失败：{}'.format(error))
+            else:
+
+                pro_list.append(pro)
+                pro_pid += 1
+
+        for pro_end in pro_list:
+
+            pro_end.join(timeout=360)
+
+
+
+    # for words in hot_list:
+    #
+    #     try:
+    #
+    #         if words:
+    #
+    #             SearchBT(words).bt_search_run()
+    #             print('{}:{}:{}正在爬取热词---{}'.format(current_time.hour,
+    #                                            current_time.minute,
+    #                                            current_time.second,
+    #                                            words))
+    #         else:
+    #
+    #             continue
+    #     except Exception as error:
+    #
+    #         print(error)
+    #         continue
+
+    print('{}:{}:{}-爬取完成'.format(current_time.hour,
+                                    current_time.minute,
+                                    current_time.second,))
 
