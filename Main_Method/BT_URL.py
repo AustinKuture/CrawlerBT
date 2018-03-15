@@ -230,7 +230,6 @@ class HotSearch(SearchBT):
 
             for hot_words in bt_url:
 
-                # print('--------------',hot_words)
                 today_hot_words.append(hot_words)
         except Exception as error:
 
@@ -332,4 +331,3 @@ if __name__ == '__main__':
     print('{}:{}:{}-爬取完成'.format(current_time.hour,
                                     current_time.minute,
                                     current_time.second,))
-

@@ -28,6 +28,15 @@ class RemoteRedis(object):
 
         return value
 
+    # 清洗掉Redis数据库中的数据
+    def flush_redis_dta(self):
+
+        # print('共清洗缓存数据{}条'.format(self.remote_redis.dbsize()))
+        clear_count = self.remote_redis.dbsize()
+        self.remote_redis.flushall()
+
+        return clear_count
+
 
 # Mongodb 数据库操作
 class MongoDB_Operator(object):
@@ -112,8 +121,11 @@ class MongoDB_Operator(object):
                                               current_time.hour,
                                               current_time.minute,
                                               current_time.second))
-        print('共新增{}条,重复{}条'.format(self.mongo_collect.count()-total_count,
-                                    repeat_count))
+        print('新增数据{}条\n重复数据{}条\n清洗缓存数据{}条'.format(self.mongo_collect.count()-total_count,
+                                                   repeat_count,
+                                                   remote_redis.flush_redis_dta()))
+
+
 
 
 # 远程Redis
@@ -125,6 +137,8 @@ mongo_operator = MongoDB_Operator('movie_bt', 'jiji_hot_bt')
 
 # 向Mongo数据库中写入数据
 mongo_operator.insert_data_to_mongo(bt_keys, remote_redis)
+
+# 清洗掉Redis中的缓存数据
 
 
 
