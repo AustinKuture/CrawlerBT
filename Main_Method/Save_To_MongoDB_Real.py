@@ -1,9 +1,7 @@
 #coding=utf-8
 import redis
-import json
-from threading import Thread,Lock
+import datetime
 from pymongo import MongoClient
-#from Read_Remote_Redis import RemoteRedis
 
 
 # 远程Redis的数据处理
@@ -12,12 +10,8 @@ class RemoteRedis(object):
     # 初始化
     def __init__(self):
 
-        #self.__remote_host = 'GdV6XFgGqXG%hv'
-        #self.__remote_pwd = 'Yin#bIXN%'
         self.remote_redis = redis.Redis(host='127.0.0.1',
-                                port=6379,
-                                   db=0,
-                                   )
+                                        port=6379,db=0)
 
     # 返回远程Redis数据库中所有的key
     def bt_keys(self):
@@ -38,8 +32,6 @@ class RemoteRedis(object):
 # Mongodb 数据库操作
 class MongoDB_Operator(object):
 
-    total_num = None
-
     # 初始化
     def __init__(self, db, collec):
 
@@ -48,14 +40,26 @@ class MongoDB_Operator(object):
 
         self.mongo_collect = mongo_client[db][collec]
 
-        self.total_num = self.mongo_collect.count()
+        if self.mongo_collect.count({'name': 'kuture_create_database'}) == 0:
+
+            init_result = self.mongo_collect.insert({'name': 'kuture_create_database'})
+
+            print('---初始化数据库',init_result)
+            # 添加索引
+            try:
+
+                self.mongo_collect.create_index('name', unique=True)
+            except Exception as error:
+
+                print('创建索引失败：',error)
+            else:
+
+                print('-----创建索引成功！-----')
 
     # 增
     def mongo_insert(self, jsons):
 
         self.mongo_collect.insert(jsons)
-
-        print('数据插入完成-----{}'.format(jsons))
 
     # 删
     def mongo_delete(self, jsons):
@@ -74,54 +78,42 @@ class MongoDB_Operator(object):
         for line in query:
             print(line)
 
-    # 去重线程
-    def __thd_mongo_remove_repeat(self, thd_lock):
+    # 向Mongo数据库中写入数据
+    def insert_data_to_mongo(self, bt_key, my_redis):
 
-        for line in self.mongo_collect.distinct('name'):
+        current_time = datetime.datetime.now()
+        print('{}月{}日 {}:{}:{}--开始写入数据'.format(current_time.month,
+                                      current_time.day,
+                                      current_time.hour,
+                                      current_time.minute,
+                                      current_time.second))
 
-            try:
+        total_count = self.mongo_collect.count()
 
-                reapt_num = self.mongo_collect.count({'name': line})
-                for remove_name in range(1, reapt_num):
-
-                    print('--->删除',line)
-                    thd_lock.acquire()
-                    self.mongo_collect.remove({'name': line}, 0)
-                    thd_lock.release()
-
-            except Exception as error:
-
-                print('删除时出现错误：', error)
-                continue
-
-    # 去重
-    def mongo_remove_repeat(self):
-
-        print('开始去重，当前数量为：',self.mongo_collect.count())
-
-        thd_list = []
-        thd_lock = Lock()
-
-        # 开启线程进行批量去重
-        for thd_start in range(5):
+        repeat_count = 0
+        for line in bt_key:
 
             try:
-                thd = Thread(target=self.__thd_mongo_remove_repeat,
-                             args=(thd_lock,))
-                thd.start()
+
+                line = line.decode('utf-8')
+                bt_value = my_redis.bt_value(line).decode()
+
+                line = str(line).replace('.', '*_*')
+
+                mongo_operator.mongo_insert({'name': line, 'magnet': bt_value})
             except Exception as error:
 
-                print('线程错误：',error)
+                # print('数据写入错误：',error)
+                repeat_count += 1
                 continue
-            else:
 
-                thd_list.append(thd)
-
-        for thd_end in thd_list:
-
-            thd_end.join()
-
-        print('去重结束，当前数量为：', self.mongo_collect.count())
+        print('{}月{}日 {}:{}:{}--数据写入完成'.format(current_time.month,
+                                              current_time.day,
+                                              current_time.hour,
+                                              current_time.minute,
+                                              current_time.second))
+        print('共新增{}条,重复{}条'.format(self.mongo_collect.count()-total_count,
+                                    repeat_count))
 
 
 # 远程Redis
@@ -132,18 +124,7 @@ bt_keys = remote_redis.bt_keys()
 mongo_operator = MongoDB_Operator('movie_bt', 'jiji_hot_bt')
 
 # 向Mongo数据库中写入数据
-for line in bt_keys:
-
-    line = line.decode('utf-8')
-    bt_value = remote_redis.bt_value(line).decode()
-
-    line = str(line).replace('.', '*_*')
-
-    mongo_operator.mongo_insert({'name':line,'unique':True,'magnet':bt_value})
-
-
-# 去重
-mongo_operator.mongo_remove_repeat()
+mongo_operator.insert_data_to_mongo(bt_keys, remote_redis)
 
 
 
