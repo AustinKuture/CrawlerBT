@@ -1,29 +1,14 @@
-import os
-import time
-import datetime
-
-def create_file():
-
-    now_time = datetime.datetime.now()
-
-    with open('{}-{}-{}.txt'.format(now_time.hour,
-                                    now_time.minute,
-                                    now_time.second), 'w') as sf:
-
-        sf.write(str(time.time()))
-    sf.close()
+import base64
 
 
-if __name__ == '__main__':
+# sect = base64.b85encode('39.107.64.6'.encode('utf-8'))
+#
+# print(sect)
+# print(base64.b85encode('kkl7990'.encode('utf-8')))
 
-    create_file()
+pro_sec = base64.b85encode('base64.b85decode(remote_host).decode()'.encode('utf-8'))
 
-
-
-
-
-
-
+print(pro_sec)
 
 
 

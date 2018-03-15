@@ -279,6 +279,7 @@ if __name__ == '__main__':
                                        current_time.minute,
                                        current_time.second))
 
+    # 对每日热词进行分组并开启相应的进程
     try:
 
         total_num = int(len(hot_list)/10)
