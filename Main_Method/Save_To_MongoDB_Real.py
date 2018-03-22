@@ -20,7 +20,6 @@ class RemoteRedis(object):
 
         return remote_keys
 
-
     # 根据key查询相应的value
     def bt_value(self, key):
 

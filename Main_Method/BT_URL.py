@@ -46,6 +46,7 @@ class ScanCookies(object):
     def _mycookies(self, secrets, agents):
 
         try:
+
             # 创建cookiejar
             mycookiejar = cookiejar.CookieJar()
             # 创建cookie处理器
@@ -63,7 +64,7 @@ class ScanCookies(object):
 
         except Exception as error:
 
-            print(error)
+            print('===>',error)
 
             return
         else:
@@ -87,7 +88,7 @@ class SearchBT(ScanCookies):
     # 获取数据
     def _bt_obtain(self, url_type, page_num=0):
 
-        time.sleep(random.randint(1,10) * 0.01)
+        time.sleep(random.randint(1,10) * 0.1)
         content = ''
         try:
 
@@ -180,9 +181,9 @@ class SearchBT(ScanCookies):
 
                     print(error)
                     continue
-                # else:
+                else:
 
-                    # print('{}\t{}'.format(redis_key,parse.unquote(line)))
+                    print('{}\t{}'.format(redis_key,parse.unquote(line)))
                     # self.__wirte_user_words_bt('./User_Method/user_magnet_bt_url.txt',line)
 
     # 写入用户指定单词
@@ -306,7 +307,6 @@ if __name__ == '__main__':
         for pro_end in pro_list:
 
             pro_end.join(timeout=360)
-
 
 
     # for words in hot_list:
