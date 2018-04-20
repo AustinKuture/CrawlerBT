@@ -38,7 +38,7 @@ user_agents = ["Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.2; MyIE2; .NET C
                "Mozilla/5.0 (Windows; U; Windows NT 5.2; en-US) AppleWebKit/534.10 (KHTML, like Gecko) Chrome/8.0.558.0 Safari/534.10 ",
                "Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.9.1.15) Gecko/20101027 Mozilla/5.0 (Windows; U; Windows NT 5.2; en-US) AppleWebKit/534.10 (KHTML, like Gecko) Chrome/7.0.540.0 Safari/534.10 "]
 
-local_redis = redis.Redis(host='127.0.0.1',port=6379, db=0)
+local_redis = redis.Redis(host='127.0.0.1',port=6379, db=0, password='kkl7990')
 
 # 请求验证并获取cookie
 class ScanCookies(object):
@@ -181,9 +181,9 @@ class SearchBT(ScanCookies):
 
                     print(error)
                     continue
-                else:
-
-                    print('{}\t{}'.format(redis_key,parse.unquote(line)))
+                # else:
+                #
+                #     print('{}\t{}'.format(redis_key,parse.unquote(line)))
                     # self.__wirte_user_words_bt('./User_Method/user_magnet_bt_url.txt',line)
 
     # 写入用户指定单词
@@ -244,7 +244,7 @@ class HotSearch(SearchBT):
     # 开启相应进程
     def hot_class_pro(self, word_pid, pro_hot_list):
 
-        print('-----------{}---------->进程-{}'.format(word_pid, pro_hot_list))
+        # print('-----------{}---------->进程-{}'.format(word_pid, pro_hot_list))
         for words in pro_hot_list:
 
             try:
@@ -252,10 +252,10 @@ class HotSearch(SearchBT):
                 if words:
 
                     SearchBT(words).bt_search_run()
-                    print('-------进程：{}-----{}:{}:{}正在爬取热词---{}'.format(word_pid, current_time.hour,
-                                                                               current_time.minute,
-                                                                               current_time.second,
-                                                                               words))
+                    # print('-------进程：{}-----{}:{}:{}正在爬取热词---{}'.format(word_pid, current_time.hour,
+                    #                                                            current_time.minute,
+                    #                                                            current_time.second,
+                    #                                                            words))
                 else:
 
                     continue
@@ -263,9 +263,9 @@ class HotSearch(SearchBT):
 
                 print(error)
                 continue
-        print('-------进程：{}-----{}:{}:{}-爬取完成'.format(word_pid,current_time.hour,
-                                                           current_time.minute,
-                                                           current_time.second,))
+        # print('-------进程：{}-----{}:{}:{}-爬取完成'.format(word_pid,current_time.hour,
+        #                                                    current_time.minute,
+        #                                                    current_time.second,))
 
 
 if __name__ == '__main__':
@@ -273,11 +273,31 @@ if __name__ == '__main__':
     # 获取热门词汇
     hot_words = HotSearch('')
     hot_list = hot_words.hot_search_word()
-    
+
     current_time = datetime.datetime.now()
-    print('{}:{}:{}-开始爬取......'.format(current_time.hour,
+    # 保存热词汇
+    words_times = '{}-{} {}:{}'.format(current_time.month,
+                                       current_time.day,
+                                       current_time.hour,
                                        current_time.minute,
-                                       current_time.second))
+                                       current_time.second)
+    try:
+
+        local_redis.set(words_times, hot_list)
+        print(words_times)
+    except Exception as error:
+
+        print('热词保存错误：',error)
+    else:
+
+        print('{}新增热词:{}'.format(words_times,hot_list))
+
+
+    print('{}-{} {}:{}:{}-开始爬取......'.format(current_time.month,
+                                                current_time.day,
+                                                current_time.hour,
+                                                current_time.minute,
+                                                current_time.second))
 
     # 对每日热词进行分组并开启相应的进程
     try:
@@ -328,6 +348,8 @@ if __name__ == '__main__':
     #         print(error)
     #         continue
 
-    print('{}:{}:{}-爬取完成'.format(current_time.hour,
-                                    current_time.minute,
-                                    current_time.second,))
+    print('{}-{} {}:{}:{}-爬取完成......'.format(current_time.month,
+                                             current_time.day,
+                                             current_time.hour,
+                                             current_time.minute,
+                                             current_time.second))
